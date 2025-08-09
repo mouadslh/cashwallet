@@ -1,0 +1,2 @@
+export const CATEGORIES = ['Salary','Food','Rent','Travel','Shopping','Utilities','Health','Entertainment','Other'];
+export const CATEGORY_COLORS = { Salary: '#4caf50', Food: '#ff7043', Rent: '#29b6f6', Travel: '#ab47bc', Shopping: '#ffa000', Utilities: '#66bb6a', Health: '#ec407a', Entertainment: '#8d6e63', Other: '#9e9e9e' };

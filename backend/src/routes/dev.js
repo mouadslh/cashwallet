@@ -1,0 +1,67 @@
+import express from 'express';
+import dayjs from 'dayjs';
+import { User } from '../models/User.js';
+import { Transaction } from '../models/Transaction.js';
+import { Budget } from '../models/Budget.js';
+
+const router = express.Router();
+
+function randomBetween(min, max) {
+  return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+}
+
+router.post('/seed', async (req, res) => {
+  try {
+    await Promise.all([User.deleteMany({}), Transaction.deleteMany({}), Budget.deleteMany({})]);
+
+    const user = await User.create({ email: 'demo@example.com', password: 'password', name: 'Demo User' });
+    const categories = ['Food', 'Rent', 'Travel', 'Shopping', 'Utilities', 'Health', 'Entertainment'];
+
+    const today = dayjs();
+    const start = today.subtract(5, 'month').startOf('month');
+
+    const txs = [];
+    for (let m = 0; m < 6; m++) {
+      const month = start.add(m, 'month');
+
+      txs.push({
+        userId: user._id,
+        type: 'income',
+        category: 'Salary',
+        amount: 3000 + randomBetween(-100, 200),
+        date: month.startOf('month').add(1, 'day').toDate(),
+        description: 'Monthly salary',
+      });
+
+      const num = 30 + Math.floor(Math.random() * 20);
+      for (let i = 0; i < num; i++) {
+        const cat = categories[Math.floor(Math.random() * categories.length)];
+        const amount = randomBetween(5, 120);
+        const day = month.date(1 + Math.floor(Math.random() * 27));
+        txs.push({
+          userId: user._id,
+          type: 'expense',
+          category: cat,
+          amount,
+          date: day.toDate(),
+          description: `${cat} expense`,
+        });
+      }
+    }
+
+    await Transaction.insertMany(txs);
+
+    await Budget.insertMany([
+      { userId: user._id, category: 'Food', monthlyLimit: 400 },
+      { userId: user._id, category: 'Travel', monthlyLimit: 200 },
+      { userId: user._id, category: 'Shopping', monthlyLimit: 300 },
+    ]);
+
+    return res.json({ message: 'Seed complete', demoUser: { email: 'demo@example.com', password: 'password' }, transactions: txs.length, budgets: 3 });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: 'Failed to seed' });
+  }
+});
+
+export default router;
